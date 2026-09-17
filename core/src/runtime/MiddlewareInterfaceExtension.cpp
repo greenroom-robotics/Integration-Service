@@ -37,7 +37,7 @@
 
 #else
 
-#define OPEN_DYNAMIC_LIB(libname) dlopen(libname, RTLD_NOW)
+#define OPEN_DYNAMIC_LIB(libname) dlopen(libname, RTLD_NOW | RTLD_DEEPBIND)
 #define GET_LAST_ERROR() dlerror()
 #define DYNAMIC_LIB_EXTENSION "dl"
 

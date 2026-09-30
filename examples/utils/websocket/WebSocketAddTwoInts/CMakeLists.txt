@@ -18,7 +18,7 @@
 ###################################################################################
 # CMake build rules for the Integration Service WebSocket AddTwoInts server example
 ###################################################################################
-cmake_minimum_required(VERSION 3.5.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.28)
 
 find_package(websocketpp REQUIRED)
 find_package(OpenSSL REQUIRED)

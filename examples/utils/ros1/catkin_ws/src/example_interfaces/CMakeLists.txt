@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.28)
 project(example_interfaces)
 
 if (NOT (BUILD_EXAMPLES OR BUILD_ROS1_EXAMPLES))

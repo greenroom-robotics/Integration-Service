@@ -18,7 +18,7 @@
 ##################################################################################
 # CMake build rules for the Integration Service Mock SystemHandle library
 ##################################################################################
-cmake_minimum_required(VERSION 3.5.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.28)
 
 project(is-mock VERSION "3.1.0" LANGUAGES CXX)
 

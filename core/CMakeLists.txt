@@ -18,7 +18,7 @@
 ###############################################################################
 # CMake build rules for the Integration Service Core library
 ###############################################################################
-cmake_minimum_required(VERSION 3.5.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.28)
 
 ###############################################################################
 # Build options

@@ -1460,10 +1460,10 @@ bool Config::configure_topics(
              * This is the core of the `from/to` route communication process.
              */
 
-            std::unique_ptr<TopicSubscriberSystem::SubscriptionCallback> unique_callback = nullptr;
             TopicSubscriberSystem* topic_subscriber_system = it_from->second.topic_subscriber;
 
-            unique_callback.reset(new TopicSubscriberSystem::SubscriptionCallback(
+            auto unique_callback = std::make_unique<GatedCallback<TopicSubscriberSystem::SubscriptionCallback> >(
+                TopicSubscriberSystem::SubscriptionCallback(
                         [=](const eprosima::xtypes::DynamicData& message,
                         void* filter_handle)
                         {
@@ -1496,7 +1496,7 @@ bool Config::configure_topics(
                 (topic_info.type.find(".") == std::string::npos
                 ? *sub_type
                 : *_m_types.at(topic_info.type.substr(0, topic_info.type.find(".")))),
-                unique_callback.get(),
+                unique_callback->get(),
                 config_or_empty_node(from, topic_config.middleware_configs));
 
             subscription_callbacks.emplace_back(std::move(unique_callback));
@@ -1681,8 +1681,8 @@ bool Config::configure_services(
              */
             eprosima::xtypes::TypeConsistency consistency = client_type->is_compatible(*server_type);
 
-            std::unique_ptr<ServiceClientSystem::RequestCallback> unique_callback = nullptr;
-            unique_callback.reset(new ServiceClientSystem::RequestCallback(
+            auto unique_callback = std::make_unique<GatedCallback<ServiceClientSystem::RequestCallback> >(
+                ServiceClientSystem::RequestCallback(
                         [=](
                             const eprosima::xtypes::DynamicData& request,
                             ServiceClient& service_client,
@@ -1717,7 +1717,7 @@ bool Config::configure_services(
                     (client_info.type.find(".") == std::string::npos
                     ? *client_type
                     : *_m_types.at(client_info.type.substr(0, client_info.type.find(".")))),
-                    unique_callback.get(),
+                    unique_callback->get(),
                     config_or_empty_node(client, service_config.middleware_configs));
             }
             else
@@ -1734,7 +1734,7 @@ bool Config::configure_services(
                     (client_info.reply_type.find(".") == std::string::npos
                     ? *client_reply_type
                     : *_m_types.at(client_info.reply_type.substr(0, client_info.reply_type.find(".")))),
-                    unique_callback.get(),
+                    unique_callback->get(),
                     config_or_empty_node(client, service_config.middleware_configs));
             }
 

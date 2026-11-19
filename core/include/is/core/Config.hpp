@@ -25,7 +25,11 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <functional>
+#include <memory>
+#include <mutex>
 #include <set>
+#include <shared_mutex>
 #include <vector>
 
 namespace eprosima {
@@ -38,6 +42,60 @@ namespace core {
 struct RequiredTypes;
 
 namespace internal {
+
+/**
+ * @class GatedCallback
+ * @brief Owns a route callback and hands SystemHandles a wrapper that can be
+ *        disabled with close().
+ *
+ *        SystemHandles keep the raw pointer from get() and may call it from their
+ *        own threads until they are destroyed. close() waits for in-flight calls,
+ *        destroys the wrapped callback (and the publishers/providers it captured,
+ *        while their SystemHandles still exist) and turns get() into a no-op.
+ *        Close every GatedCallback before destroying the SystemHandles, and
+ *        destroy the GatedCallbacks only after them.
+ */
+template<typename Callback>
+class GatedCallback
+{
+public:
+
+    explicit GatedCallback(
+            Callback callback)
+        : _callback(std::move(callback))
+        , _gate([this](auto&&... args)
+                {
+                    std::shared_lock<std::shared_mutex> lock(_mutex);
+                    if (_callback)
+                    {
+                        _callback(std::forward<decltype(args)>(args)...);
+                    }
+                })
+    {
+    }
+
+    GatedCallback(
+            const GatedCallback&) = delete;
+    GatedCallback& operator =(
+            const GatedCallback&) = delete;
+
+    Callback* get()
+    {
+        return &_gate;
+    }
+
+    void close()
+    {
+        std::unique_lock<std::shared_mutex> lock(_mutex);
+        _callback = nullptr;
+    }
+
+private:
+
+    std::shared_mutex _mutex;
+    Callback _callback;
+    Callback _gate;
+};
 
 /**
  * @struct MiddlewareConfig
@@ -233,14 +291,14 @@ public:
      *        *Integration Service* instance.
      */
     using SubscriptionCallbacks =
-            std::vector<std::unique_ptr<is::TopicSubscriberSystem::SubscriptionCallback> >;
+            std::vector<std::unique_ptr<GatedCallback<is::TopicSubscriberSystem::SubscriptionCallback> > >;
 
     /**
      * @brief Signature for the container used to store the service request callbacks for a certain
      *        *Integration Service* instance.
      */
     using RequestCallbacks =
-            std::vector<std::unique_ptr<is::ServiceClientSystem::RequestCallback> >;
+            std::vector<std::unique_ptr<GatedCallback<is::ServiceClientSystem::RequestCallback> > >;
 
     /**
      * @brief Constructor.

@@ -36,3 +36,20 @@ target_compile_definitions(is-core-test
         "SEARCH_TEST__MOCK_FILE_NAME=\"${mock_file_name}\""
         "SEARCH_TEST__MOCK_FILE_PATH=\"${mock_file_path}\""
 )
+
+add_executable(is-core-teardown-test
+    unit/teardown_order_test.cpp
+    )
+
+target_link_libraries(is-core-teardown-test
+    PRIVATE
+        is-core
+    PUBLIC
+        $<IF:$<BOOL:${IS_GTEST_EXTERNAL_PROJECT}>,libgtest,gtest>
+    )
+
+# ASan turns a call through a freed callback into a deterministic failure.
+target_compile_options(is-core-teardown-test PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+target_link_options(is-core-teardown-test PRIVATE -fsanitize=address)
+
+add_gtest(is-core-teardown-test SOURCES unit/teardown_order_test.cpp)

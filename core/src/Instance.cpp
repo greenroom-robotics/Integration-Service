@@ -88,7 +88,21 @@ public:
     {
     }
 
-    ~Implementation() = default;
+    ~Implementation()
+    {
+        // SystemHandle threads keep calling these until _info_map is destroyed, but
+        // the publishers/providers they captured must go while every SystemHandle
+        // still exists. Closing releases those and leaves no-op callbacks behind.
+        for (auto& callback : subscription_callbacks_)
+        {
+            callback->close();
+        }
+
+        for (auto& callback : request_callbacks_)
+        {
+            callback->close();
+        }
+    }
 
     bool configure_integration_service()
     {
@@ -267,11 +281,13 @@ private:
 
     internal::Config _configuration;
 
-    is::internal::SystemHandleInfoMap _info_map;
-
+    // Declared before _info_map so they are destroyed after it: SystemHandles hold
+    // raw pointers to these callbacks (see ~Implementation).
     internal::Config::SubscriptionCallbacks subscription_callbacks_;
 
     internal::Config::RequestCallbacks request_callbacks_;
+
+    is::internal::SystemHandleInfoMap _info_map;
 
     std::atomic_bool _quit;
 
